@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For My Love, Ruchi</title>
+    <style>
+        /* --- FONTS --- */
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@700&family=Indie+Flower&family=Roboto:wght@400;500&display=swap');
+
+        /* --- RESET & BODY --- */
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #2b1b1b;
+            /* Luxurious Dark Wood Texture */
+            background-image: 
+                radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%),
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.07'/%3E%3C/svg%3E");
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Playfair Display', serif;
+            overflow: hidden;
+            perspective: 1500px;
+        }
+
+        /* --- FIREWORKS CANVAS --- */
+        #fireworks {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        /* --- NEW EMBEDDED STORY PLAYER (STICKER STYLE) --- */
+        .story-sticker {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            width: 240px; /* Increased width to fit timeline */
+            /* Center it on the letter */
+            margin: 0 auto 30px auto; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: rotate(3deg); /* Sticker tilt */
+            border: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 30;
+            transition: transform 0.2s;
+        }
+        
+        .story-sticker:hover {
+            transform: rotate(0deg) scale(1.02);
+        }
+
+        .sticker-art-wrapper {
+            position: relative;
+            width: 210px; /* Adjusted to match new width */
+            height: 210px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 12px;
+        }
+
+        .sticker-art {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .sticker-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .sticker-overlay:hover { background: rgba(0,0,0,0.3); }
+
+        .sticker-play-btn {
+            font-size: 3rem;
+            color: white;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        .sticker-info {
+            text-align: center;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .sticker-title {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #2d3436;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sticker-artist {
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.75rem;
+            color: #636e72;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sticker-timeline {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 5px; /* Inner padding to prevent edge touching */
+        }
+
+        .sticker-time {
+            font-size: 0.65rem;
+            font-family: monospace;
+            color: #888;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .sticker-slider {
+            flex-grow: 1;
+            height: 4px;
+            min-width: 0; /* Prevents overflow */
+            -webkit-appearance: none;
+            background: #dfe6e9;
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+        .sticker-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #e17055;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        /* --- THE BOOK CONTAINER --- */
+        .book {
+            width: 420px;
+            height: 580px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            cursor: pointer;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+        }
+
+        .book.open {
+            transform: translateX(50%) rotateY(-5deg);
+            cursor: default;
+        }
+
+        /* --- BOOK COVER --- */
+        .cover {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Romantic Sunset Gradient */
+            background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
+            border-radius: 5px 15px 15px 5px;
+            transform-origin: left;
+            transform-style: preserve-3d;
+            transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #d65db1;
+            box-shadow: 
+                inset 4px 0 10px rgba(0,0,0,0.2),
+                inset 0 0 0 5px rgba(255,255,255,0.1); 
+        }
+
+        /* Gold Decorative Frame on Cover */
+        .cover::after {
+            content: '';
+            position: absolute;
+            top: 20px; bottom: 20px; left: 20px; right: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 5px 10px 10px 5px;
+            pointer-events: none;
+        }
+
+        /* Corner Decorations */
+        .corner-deco {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-top: 3px solid rgba(255,255,255,0.6);
+            border-left: 3px solid rgba(255,255,255,0.6);
+            top: 30px;
+            left: 30px;
+        }
+        .corner-deco.bottom-right {
+            top: auto; left: auto; bottom: 30px; right: 30px;
+            transform: rotate(180deg);
+        }
+
+        .book.open .cover {
+            transform: rotateY(-180deg);
+            box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+        }
+
+        /* --- GOOGLE DOODLE STYLE NAME --- */
+        .doodle-container {
+            display: flex;
+            align-items: baseline;
+            gap: 3px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 2px rgba(0,0,0,0.2));
+            z-index: 20;
+        }
+
+        .doodle-char {
+            font-family: 'Pacifico', cursive;
+            font-size: 5.5rem;
+            animation: bounce 2s infinite ease-in-out;
+            position: relative;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+
+        .char-r { color: #fff; animation-delay: 0s; transform: rotate(-5deg); }
+        .char-u { color: #ffeaa7; animation-delay: 0.1s; transform: rotate(3deg); }
+        .char-c { color: #81ecec; animation-delay: 0.2s; transform: rotate(-3deg); }
+        .char-h { color: #fab1a0; animation-delay: 0.3s; transform: rotate(2deg); }
+        .char-i { color: #fff; animation-delay: 0.4s; transform: rotate(-2deg); }
+        
+        .char-i::after {
+            content: '♥';
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.8rem;
+            color: #ffeaa7;
+            animation: beat 1s infinite;
+        }
+
+        .lock-icon {
+            font-size: 3rem;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 10px;
+            animation: swing 3s infinite ease-in-out;
+        }
+
+        .cover p {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            letter-spacing: 4px;
+            margin-top: 15px;
+            text-transform: uppercase;
+            color: white; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .click-hint {
+            margin-top: 30px; 
+            font-size: 0.9rem; 
+            color: rgba(255,255,255,0.8);
+            font-family: 'Indie Flower', cursive;
+            animation: pulse 2s infinite;
+        }
+
+        /* --- INSIDE PAGES --- */
+        .page {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            width: 400px;
+            height: 560px;
+            background: #fffdf5; 
+            background-image: repeating-linear-gradient(#fffdf5 0px, #fffdf5 24px, #e3f2fd 25px);
+            border-radius: 0 10px 10px 0;
+            box-shadow: inset 15px 0 25px rgba(0,0,0,0.1), 5px 5px 15px rgba(0,0,0,0.15);
+            z-index: 5;
+            padding: 30px 25px 30px 45px; 
+            display: flex;
+            flex-direction: column;
+            transform-origin: left;
+            transition: z-index 0.5s, transform 1s;
+        }
+
+        .page::after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0; left: 35px;
+            width: 2px;
+            background: rgba(255, 100, 100, 0.4);
+            z-index: 10;
+        }
+
+        /* --- PAGE 1: COUNTDOWN --- */
+        #page-countdown {
+            z-index: 4;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .doodle-star { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; color: #fbc531; transform: rotate(15deg); }
+        .doodle-cloud { position: absolute; bottom: 80px; left: 50px; font-size: 2rem; color: #a29bfe; opacity: 0.5; }
+
+        .polaroid {
+            background: white;
+            padding: 15px 15px 40px 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            transform: rotate(-3deg);
+            margin-bottom: 20px;
+            width: 85%;
+            position: relative;
+            border: 1px solid #eee;
+            z-index: 20; 
+        }
+        
+        .tape {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%) rotate(2deg);
+            width: 120px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.85);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(253, 121, 168, 0.2) 10px, rgba(253, 121, 168, 0.2) 20px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            opacity: 0.9;
+        }
+
+        .countdown-display {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .cd-box {
+            background: #2d3436;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            min-width: 55px;
+            text-align: center;
+            box-shadow: 0 4px 0 #636e72;
+        }
+        .cd-num { font-size: 1.6rem; font-weight: bold; display: block; font-family: 'Courier New', monospace; }
+        .cd-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-top: 4px; display: block;}
+
+        .waiting-text {
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.6rem;
+            color: #555;
+            margin-top: 25px;
+            text-align: center;
+            line-height: 1.4;
+            z-index: 20;
+        }
+
+        .next-btn {
+            margin-top: 30px;
+            padding: 12px 35px;
+            background: #e17055;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            opacity: 0.5;
+            pointer-events: none;
+            transition: 0.3s;
+            z-index: 20;
+            box-shadow: 0 5px 15px rgba(225, 112, 85, 0.3);
+        }
+        
+        .next-btn.active {
+            opacity: 1;
+            pointer-events: all;
+            animation: pulse 2s infinite;
+        }
+
+        /* --- PAGE 2: THE LETTER --- */
+        #page-letter {
+            z-index: 3;
+            transform: rotateY(0deg);
+            backface-visibility: hidden;
+            overflow-y: auto;
+        }
+        
+        .ribbon {
+            position: absolute;
+            top: -5px;
+            right: 30px;
+            width: 25px;
+            height: 80px;
+            background: #e84393;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 25;
+        }
+        .ribbon::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            border-left: 12.5px solid #e84393;
+            border-right: 12.5px solid #e84393;
+            border-bottom: 10px solid transparent;
+        }
+
+        .doodle-heart-1 { position: absolute; top: 40px; right: 60px; font-size: 1.2rem; color: #ff7675; transform: rotate(20deg); opacity: 0.6; }
+        .doodle-flower { position: absolute; bottom: 120px; left: 40px; font-size: 2rem; color: #fd79a8; opacity: 0.4; }
+
+        .letter-content {
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.4rem;
+            line-height: 25px; 
+            color: #2c3e50;
+            text-align: left;
+            position: relative;
+            z-index: 20;
+        }
+
+        .letter-content p { margin-bottom: 25px; }
+        
+        .greeting {
+            font-size: 2rem;
+            color: #c0392b;
+            font-weight: 700;
+        }
+
+        .highlight {
+            background: rgba(253, 203, 110, 0.3);
+            border-radius: 4px;
+            padding: 0 4px;
+        }
+
+        .sticker {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            font-size: 4rem;
+            transform: rotate(-10deg);
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
+            z-index: 20;
+        }
+
+        /* --- NEW AI FEATURES STYLES --- */
+        .oracle-section {
+            margin-top: 40px;
+            border-top: 2px dashed #ffb7b2;
+            padding-top: 20px;
+            text-align: center;
+        }
+
+        .oracle-btn {
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4);
+            border: 2px solid #fff;
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: #d63031;
+            font-family: 'Pacifico', cursive;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .oracle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+        }
+
+        .oracle-result {
+            margin-top: 20px;
+            background: #fff9c4; /* Sticky note yellow */
+            padding: 15px;
+            font-family: 'Indie Flower', cursive;
+            font-size: 1.2rem;
+            color: #5d4037;
+            border-radius: 2px 2px 10px 2px;
+            box-shadow: 2px 4px 8px rgba(0,0,0,0.1);
+            transform: rotate(-1deg);
+            display: none; /* Hidden initially */
+            animation: fadeIn 0.5s ease;
+        }
+
+        .loading-heart {
+            display: inline-block;
+            animation: beat 0.8s infinite;
+        }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes beat { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.2); } }
+        @keyframes swing { 0% { transform: rotate(0deg); } 20% { transform: rotate(15deg); } 40% { transform: rotate(-10deg); } 60% { transform: rotate(5deg); } 100% { transform: rotate(0deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px) rotate(-1deg); } to { opacity: 1; transform: translateY(0) rotate(-1deg); } }
+
+        /* Mobile */
+        @media (max-width: 500px) {
+            .book { width: 92vw; height: 80vh; }
+            .page { width: 88vw; height: 78vh; padding-left: 30px; }
+            .doodle-char { font-size: 4rem; }
+            /* Adjusted story sticker for mobile */
+            .story-sticker { width: 80%; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="fireworks"></canvas>
+
+    <!-- AUDIO SOURCE - REPLACE WITH YOUR FILE IF NEEDED -->
+    <audio id="audio-player" loop>
+        <!-- 1. Save your song file as "song.mp3" in the same folder as this HTML file -->
+        <source src="song.mp3" type="audio/mp3">
+        <!-- Fallback to online track if local file is missing -->
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+
+    <div class="book" id="book" onclick="openBook()">
+        
+        <!-- THE COVER -->
+        <div class="cover">
+            <!-- Decorations -->
+            <div class="corner-deco"></div>
+            <div class="corner-deco bottom-right"></div>
+            
+            <div class="lock-icon">🔒</div>
+
+            <!-- GOOGLE DOODLE STYLE TITLE -->
+            <div class="doodle-container">
+                <span class="doodle-char char-r">R</span>
+                <span class="doodle-char char-u">u</span>
+                <span class="doodle-char char-c">c</span>
+                <span class="doodle-char char-h">h</span>
+                <span class="doodle-char char-i">i</span>
+            </div>
+            
+            <p>My 2026 Story</p>
+            <div class="click-hint">(Tap to Unlock)</div>
+        </div>
+
+        <!-- PAGE 1: COUNTDOWN -->
+        <div class="page" id="page-countdown">
+            <!-- Doodles -->
+            <div class="doodle-star">✨</div>
+            <div class="doodle-cloud">☁️</div>
+
+            <div class="polaroid">
+                <div class="tape"></div>
+                <div style="font-family: 'Pacifico'; font-size: 1.8rem; color: #333; margin-bottom:15px; text-align:center;">Waiting for 2026...</div>
+                
+                <div class="countdown-display">
+                    <div class="cd-box"><span id="hours" class="cd-num">00</span><span class="cd-label">Hrs</span></div>
+                    <div class="cd-box"><span id="mins" class="cd-num">00</span><span class="cd-label">Min</span></div>
+                    <div class="cd-box"><span id="secs" class="cd-num">00</span><span class="cd-label">Sec</span></div>
+                </div>
+            </div>
+
+            <div class="waiting-text" id="status-msg">
+                Counting down the moments until I can start a fresh chapter with you.
+            </div>
+
+            <button class="next-btn" id="read-btn" onclick="turnPage(event)">
+                Open My Heart 💌
+            </button>
+        </div>
+
+        <!-- PAGE 2: THE LETTER -->
+        <div class="page" id="page-letter">
+            <div class="ribbon"></div>
+            <div class="doodle-heart-1">❤️</div>
+            <div class="doodle-flower">🌸</div>
+
+            <!-- EMBEDDED INSTAGRAM STYLE MUSIC STICKER -->
+            <div class="story-sticker">
+                <div class="sticker-art-wrapper">
+                    <img src="https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?q=80&w=300&auto=format&fit=crop" alt="Cover" class="sticker-art">
+                    <div class="sticker-overlay" onclick="togglePlay()">
+                        <span id="play-icon" class="sticker-play-btn">▶</span>
+                    </div>
+                </div>
+                <div class="sticker-info">
+                    <div class="sticker-title">Tum Jo Aaye</div>
+                    <div class="sticker-artist">Rahat Fateh Ali Khan</div>
+                </div>
+                <div class="sticker-timeline">
+                    <span class="sticker-time" id="curr-time">0:00</span>
+                    <input type="range" id="seek-bar" class="sticker-slider" value="0" max="100">
+                    <span class="sticker-time" id="dur-time">4:46</span>
+                </div>
+            </div>
+
+            <div class="letter-content">
+                <p class="greeting">My Dearest Ruchi,</p>
+
+                <p>As the clock strikes midnight and the world celebrates a new beginning, my only thought is of you. Standing on the edge of 2026, I find myself looking back at the memories we’ve collected—snapshots of laughter, quiet moments, and the warmth that only you bring into my life.</p>
+
+                <p>You have become my <span class="highlight">favorite chapter</span> in this book called life. In a world that often feels chaotic and loud, you are my quiet corner, my peace, and my anchor. I don't say it enough, but your presence changes everything for me. It makes the good days brighter and the hard days bearable.</p>
+
+                <p>This year, I don’t just want to make resolutions; I want to make memories. I want to be the person who supports your wildest dreams and the one who holds your hand when you’re tired. I promise to listen more, to love deeper, and to never let a day go by without letting you know how precious you are to me.</p>
+
+                <p>Thank you for being "Ruchi"—for being exactly who you are. Here is to 365 new chances to make you smile.</p>
+
+                <p>Happy New Year, my love.</p>
+                
+                <p style="text-align: right; margin-top: 40px; font-family:'Playfair Display'; font-weight:bold;">Forever yours,<br>Vansh</p>
+                
+                <!-- NEW AI FEATURE: LOVE ORACLE -->
+                <div class="oracle-section">
+                    <button class="oracle-btn" onclick="generateDestiny()">✨ Ask the Stars for 2026 ✨</button>
+                    <div id="destiny-box" class="oracle-result"></div>
+                </div>
+                
+                <br><br><br> <!-- Extra space for scrolling -->
+            </div>
+            
+            <div class="sticker">🌹</div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        
+        // *** REAL MODE (Midnight, Jan 1, 2026) ***
+        const targetDate = new Date('January 1, 2026 00:00:00').getTime();
+
+        // --- GEMINI API INTEGRATION ---
+        async function callGeminiAPI(prompt) {
+            const apiKey = ""; // API key will be provided by the environment
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+
+                if (!response.ok) throw new Error('API call failed');
+                
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error(error);
+                return "The stars are whispering, but I can't quite hear them. Try again later. ✨";
+            }
+        }
+
+        async function generateDestiny() {
+            const btn = document.querySelector('.oracle-btn');
+            const resultBox = document.getElementById('destiny-box');
+            
+            // UI Loading State
+            btn.disabled = true;
+            btn.innerHTML = '✨ Consulting the Cosmos <span class="loading-heart">❤️</span> ✨';
+            resultBox.style.display = 'none';
+            resultBox.innerHTML = '';
+
+            // The Prompt
+            const prompt = "Write a short, whimsical, and romantic prediction for the year 2026 for a couple named Ruchi and Vansh. Mention love, joy, and a specific cute activity they might do together. Keep it under 2 sentences. Use emojis.";
+
+            // Call API
+            const prediction = await callGeminiAPI(prompt);
+
+            // Display Result
+            resultBox.innerText = prediction;
+            resultBox.style.display = 'block';
+            
+            // Reset Button
+            btn.disabled = false;
+            btn.innerHTML = '✨ Ask the Stars Again ✨';
+        }
+
+        // --- AUDIO PLAYER LOGIC ---
+        const audio = document.getElementById('audio-player');
+        const playBtn = document.getElementById('play-icon');
+        const seekBar = document.getElementById('seek-bar');
+        const currTime = document.getElementById('curr-time');
+        const durTime = document.getElementById('dur-time');
+
+        function togglePlay() {
+            if (audio.paused) {
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        playBtn.innerText = "⏸";
+                    }).catch(error => {
+                        console.log("Playback prevented/aborted: " + error);
+                        playBtn.innerText = "▶";
+                    });
+                }
+            } else {
+                audio.pause();
+                playBtn.innerText = "▶";
+            }
+        }
+
+        // Update progress bar
+        audio.addEventListener('timeupdate', () => {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            seekBar.value = progress;
+            
+            // Update time text
+            let mins = Math.floor(audio.currentTime / 60);
+            let secs = Math.floor(audio.currentTime % 60);
+            if(secs < 10) secs = '0' + secs;
+            currTime.innerText = `${mins}:${secs}`;
+        });
+
+        // Set duration text on load
+        audio.addEventListener('loadedmetadata', () => {
+            let mins = Math.floor(audio.duration / 60);
+            let secs = Math.floor(audio.duration % 60);
+            if(secs < 10) secs = '0' + secs;
+            durTime.innerText = `${mins}:${secs}`;
+        });
+
+        // Seek functionality
+        seekBar.addEventListener('input', () => {
+            const seekTime = (seekBar.value / 100) * audio.duration;
+            audio.currentTime = seekTime;
+        });
+
+
+        // --- BOOK ANIMATION LOGIC ---
+        let isBookOpen = false;
+
+        function openBook() {
+            if (!isBookOpen) {
+                document.getElementById('book').classList.add('open');
+                isBookOpen = true;
+            }
+        }
+
+        function turnPage(e) {
+            e.stopPropagation(); 
+            const p1 = document.getElementById('page-countdown');
+            p1.style.transform = "rotateY(-180deg)";
+            p1.style.zIndex = "1"; 
+            
+            const p2 = document.getElementById('page-letter');
+            p2.style.zIndex = "10";
+        }
+
+        // --- COUNTDOWN LOGIC ---
+        const btn = document.getElementById('read-btn');
+        const statusMsg = document.getElementById('status-msg');
+        let celebrationStarted = false;
+
+        function updateTimer() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance < 0) {
+                // IT IS 2026!
+                document.getElementById('hours').innerText = "00";
+                document.getElementById('mins').innerText = "00";
+                document.getElementById('secs').innerText = "00";
+                
+                statusMsg.innerHTML = "It's 2026! Happy New Year, Ruchi! <br> My heart is open for you.";
+                
+                btn.classList.add('active');
+                btn.innerText = "Read My Letter 💖";
+
+                if (!celebrationStarted) {
+                    celebrationStarted = true;
+                    startFireworks();
+                }
+            } else {
+                // STILL 2025
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                document.getElementById('hours').innerText = hours < 10 ? '0' + hours : hours;
+                document.getElementById('mins').innerText = minutes < 10 ? '0' + minutes : minutes;
+                document.getElementById('secs').innerText = seconds < 10 ? '0' + seconds : seconds;
+            }
+        }
+
+        setInterval(updateTimer, 1000);
+        updateTimer();
+
+        // --- FIREWORKS ENGINE ---
+        const canvas = document.getElementById('fireworks');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function createParticle(x, y) {
+            // Updated colors for the love theme (Reds, Pinks, Golds)
+            const colors = ['#e74c3c', '#e84393', '#fd79a8', '#ffeaa7', '#ffffff'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const particle = {
+                x: x,
+                y: y,
+                color: color,
+                speedX: Math.random() * 6 - 3,
+                speedY: Math.random() * 6 - 3,
+                size: Math.random() * 4 + 1,
+                alpha: 1
+            };
+            particles.push(particle);
+        }
+
+        function startFireworks() {
+            setInterval(() => {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height / 2;
+                for (let i = 0; i < 30; i++) {
+                    createParticle(x, y);
+                }
+            }, 800);
+            animateFireworks();
+        }
+
+        function animateFireworks() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                p.x += p.speedX;
+                p.y += p.speedY;
+                p.speedY += 0.05;
+                p.alpha -= 0.01;
+                p.size *= 0.98;
+
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                    i--;
+                }
+            }
+            requestAnimationFrame(animateFireworks);
+        }
+    </script>
+</body>
+</html>
